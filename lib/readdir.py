@@ -61,6 +61,10 @@ class dirent(ctypes.Structure):
 def readdir(directory):
     """Calls readdir on a directory and returns a list of dirent objects.
     """
+
+    # temporary PY3 fix
+    directory = directory.encode()
+
     entries = []
     dirp = _opendir(directory)
     if not bool(dirp):

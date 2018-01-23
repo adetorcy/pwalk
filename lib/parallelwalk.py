@@ -11,9 +11,11 @@ from mpi4py import MPI
 import os
 import random
 import stat
-import readdir
+from . import readdir
 import time
 from collections import deque
+
+
 class ParallelWalk():
     """This class implements a parallel directory walking algorithm described 
     by LaFon, Misra and Bringhurst
@@ -76,7 +78,7 @@ class ParallelWalk():
         self.comm = comm.Dup()
         self.rank = self.comm.Get_rank()
         self.workers = self.comm.size
-        self.others = range(0, self.rank) + range(self.rank+1, self.workers)
+        self.others = list(range(0, self.rank)) + list(range(self.rank+1, self.workers))
         self.nextworker = (self.rank + 1) % self.workers
         self.colour = "White"
         self.token = False
@@ -173,16 +175,15 @@ class ParallelWalk():
             # to be processed.
             if filetype == 4:
                 for node in readdir.readdir(filename):
-                    if not node.d_name in (".",".."):
-                        fullname = os.path.join(filename, node.d_name)
+                    if not node.d_name in (b".",b".."):
+                        fullname = os.path.join(filename, node.d_name.decode())
                         self.items.appendleft((fullname, node.d_type))
             # Call the processing functions on the directory or file.
                 self.ProcessDir(filename)
             else:
                 self.ProcessFile(filename)
         except OSError as error:
-            print "cannot access `%s':" % filename,
-            print os.strerror(error.errno)
+            print("cannot access '{}': {}".format(filename, os.strerror(error.errno)))
         return()
 
     def _AskForWork(self):
